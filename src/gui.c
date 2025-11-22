@@ -204,14 +204,15 @@ gui_box_set_packing( GtkWidget *box_w, boolean expand, boolean fill, boolean sta
 
 /* The standard button widget */
 GtkWidget *
-gui_button_add( GtkWidget *parent_w, const char *label, void (*callback)( ), void *callback_data )
+gui_button_add_cb( GtkWidget *parent_w, const char *label, GCallback callback, void *callback_data )
 {
 	GtkWidget *button_w;
 
 	button_w = gtk_button_new( );
 	if (label != NULL)
 		gui_label_add( button_w, label );
-	gtk_signal_connect( GTK_OBJECT(button_w), "clicked", GTK_SIGNAL_FUNC(callback), callback_data );
+	if (callback != NULL)
+		g_signal_connect( G_OBJECT(button_w), "clicked", callback, callback_data );
 	parent_child( parent_w, button_w );
 
 	return button_w;
@@ -220,7 +221,7 @@ gui_button_add( GtkWidget *parent_w, const char *label, void (*callback)( ), voi
 
 /* Creates a button with a pixmap prepended to the label */
 GtkWidget *
-gui_button_with_pixmap_xpm_add( GtkWidget *parent_w, char **xpm_data, const char *label, void (*callback)( ), void *callback_data )
+gui_button_with_pixmap_xpm_add_cb( GtkWidget *parent_w, char **xpm_data, const char *label, GCallback callback, void *callback_data )
 {
 	GtkWidget *button_w;
 	GtkWidget *hbox_w, *hbox2_w;
@@ -235,7 +236,8 @@ gui_button_with_pixmap_xpm_add( GtkWidget *parent_w, char **xpm_data, const char
 		gui_vbox_add( hbox2_w, 2 ); /* spacer */
 		gui_label_add( hbox2_w, label );
 	}
-	gtk_signal_connect( GTK_OBJECT(button_w), "clicked", GTK_SIGNAL_FUNC(callback), callback_data );
+	if (callback != NULL)
+		g_signal_connect( G_OBJECT(button_w), "clicked", callback, callback_data );
 
 	return button_w;
 }
@@ -243,7 +245,7 @@ gui_button_with_pixmap_xpm_add( GtkWidget *parent_w, char **xpm_data, const char
 
 /* The toggle button widget */
 GtkWidget *
-gui_toggle_button_add( GtkWidget *parent_w, const char *label, boolean active, void (*callback)( ), void *callback_data )
+gui_toggle_button_add_cb( GtkWidget *parent_w, const char *label, boolean active, GCallback callback, void *callback_data )
 {
 	GtkWidget *tbutton_w;
 
@@ -251,7 +253,8 @@ gui_toggle_button_add( GtkWidget *parent_w, const char *label, boolean active, v
 	if (label != NULL)
 		gui_label_add( tbutton_w, label );
 	gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(tbutton_w), active );
-	gtk_signal_connect( GTK_OBJECT(tbutton_w), "toggled", GTK_SIGNAL_FUNC(callback), callback_data );
+	if (callback != NULL)
+		g_signal_connect( G_OBJECT(tbutton_w), "toggled", callback, callback_data );
 	parent_child( parent_w, tbutton_w );
 
 	return tbutton_w;
@@ -354,7 +357,7 @@ color_picker_cb( GtkWidget *colorpicker_w, unsigned int r, unsigned int g, unsig
  * Changing the color (i.e. pressing OK in the color selection dialog)
  * activates the given callback */
 GtkWidget *
-gui_colorpicker_add( GtkWidget *parent_w, RGBcolor *init_color, const char *title, void (*callback)( ), void *callback_data )
+gui_colorpicker_add( GtkWidget *parent_w, RGBcolor *init_color, const char *title, void (*callback)( RGBcolor *, void * ), void *callback_data )
 {
 	GtkWidget *colorbutton_w;
 
@@ -480,7 +483,7 @@ gui_cursor( GtkWidget *widget, int glyph )
 /* The date edit widget (imported from Gnomeland). The given callback is
  * called whenever the date/time is changed */
 GtkWidget *
-gui_dateedit_add( GtkWidget *parent_w, time_t the_time, void (*callback)( ), void *callback_data )
+gui_dateedit_add_cb( GtkWidget *parent_w, time_t the_time, GCallback callback, void *callback_data )
 {
 	GtkWidget *dateedit_w;
 
@@ -513,7 +516,7 @@ gui_dateedit_set_time( GtkWidget *dateedit_w, time_t the_time )
 
 /* The entry (text input) widget */
 GtkWidget *
-gui_entry_add( GtkWidget *parent_w, const char *init_text, void (*callback)( ), void *callback_data )
+gui_entry_add_cb( GtkWidget *parent_w, const char *init_text, GCallback callback, void *callback_data )
 {
 	GtkWidget *entry_w;
 
@@ -521,7 +524,7 @@ gui_entry_add( GtkWidget *parent_w, const char *init_text, void (*callback)( ), 
         if (init_text != NULL)
 		gtk_entry_set_text( GTK_ENTRY(entry_w), init_text );
 	if (callback != NULL )
-		gtk_signal_connect( GTK_OBJECT(entry_w), "activate", GTK_SIGNAL_FUNC(callback), callback_data );
+		g_signal_connect( G_OBJECT(entry_w), "activate", callback, callback_data );
 	parent_child_full( parent_w, entry_w, EXPAND, FILL );
 
 	return entry_w;
@@ -687,14 +690,14 @@ gui_menu_add( GtkWidget *parent_menu_w, const char *label )
 
 /* Adds a menu item to a menu */
 GtkWidget *
-gui_menu_item_add( GtkWidget *menu_w, const char *label, void (*callback)( ), void *callback_data )
+gui_menu_item_add_cb( GtkWidget *menu_w, const char *label, GCallback callback, void *callback_data )
 {
 	GtkWidget *menu_item_w;
 
 	menu_item_w = gtk_menu_item_new_with_label( label );
 	gtk_menu_append( GTK_MENU(menu_w), menu_item_w );
 	if (callback != NULL)
-		gtk_signal_connect( GTK_OBJECT(menu_item_w), "activate", GTK_SIGNAL_FUNC(callback), callback_data );
+		g_signal_connect( G_OBJECT(menu_item_w), "activate", callback, callback_data );
 	gtk_widget_show( menu_item_w );
 
 	return menu_item_w;
@@ -717,7 +720,7 @@ gui_radio_menu_begin( int init_selected )
  * in the group will be "toggled" off. The callback should either watch
  * for this, or do nothing if the widget's "active" flag is FALSE */
 GtkWidget *
-gui_radio_menu_item_add( GtkWidget *menu_w, const char *label, void (*callback)( ), void *callback_data )
+gui_radio_menu_item_add_cb( GtkWidget *menu_w, const char *label, GCallback callback, void *callback_data )
 {
 	static GSList *radio_group;
 	static int init_selected;
@@ -736,7 +739,8 @@ gui_radio_menu_item_add( GtkWidget *menu_w, const char *label, void (*callback)(
 		gtk_menu_append( GTK_MENU(menu_w), radmenu_item_w );
 		if (radmenu_item_num == init_selected)
 			gtk_check_menu_item_set_active( GTK_CHECK_MENU_ITEM(radmenu_item_w), TRUE );
-		gtk_signal_connect( GTK_OBJECT(radmenu_item_w), "toggled", GTK_SIGNAL_FUNC(callback), callback_data );
+		if (callback != NULL)
+			g_signal_connect( G_OBJECT(radmenu_item_w), "toggled", callback, callback_data );
 		gtk_widget_show( radmenu_item_w );
 		++radmenu_item_num;
 	}
@@ -776,13 +780,13 @@ gui_option_menu_add( GtkWidget *parent_w, int init_selected )
 /* Option menu definiton. Call this once for each menu item, and then call
  * gui_option_menu_add( ) to produce the finished widget */
 GtkWidget *
-gui_option_menu_item( const char *label, void (*callback)( ), void *callback_data )
+gui_option_menu_item_cb( const char *label, GCallback callback, void *callback_data )
 {
 	GtkWidget *menu_item_w;
 
 	menu_item_w = gtk_menu_item_new_with_label( label );
 	if (callback != NULL)
-		gtk_signal_connect( GTK_OBJECT(menu_item_w), "activate", GTK_SIGNAL_FUNC(callback), callback_data );
+		g_signal_connect( G_OBJECT(menu_item_w), "activate", callback, callback_data );
 	gui_option_menu_add( menu_item_w, NIL );
 
 	return menu_item_w;
@@ -1116,7 +1120,7 @@ colorsel_window_cb( GtkWidget *colorsel_window_w )
 {
         RGBcolor color;
 	double color_rgb[4];
-	void (*user_callback)( const RGBcolor *, void * );
+	void (*user_callback)( RGBcolor *, void * );
 	void *user_callback_data;
 
 	gtk_color_selection_get_color( GTK_COLOR_SELECTION(GTK_COLOR_SELECTION_DIALOG(colorsel_window_w)->colorsel), color_rgb );
@@ -1124,7 +1128,7 @@ colorsel_window_cb( GtkWidget *colorsel_window_w )
 	color.g = color_rgb[1];
 	color.b = color_rgb[2];
 
-	user_callback = (void (*)( const RGBcolor *, void * ))gtk_object_get_data( GTK_OBJECT(colorsel_window_w), "user_callback" );
+	user_callback = (void (*)( RGBcolor *, void * ))gtk_object_get_data( GTK_OBJECT(colorsel_window_w), "user_callback" );
 	user_callback_data = gtk_object_get_data( GTK_OBJECT(colorsel_window_w), "user_callback_data" );
 	gtk_widget_destroy( colorsel_window_w );
 
@@ -1135,7 +1139,7 @@ colorsel_window_cb( GtkWidget *colorsel_window_w )
 
 /* Creates a color selection window. OK button activates ok_callback */
 GtkWidget *
-gui_colorsel_window( const char *title, RGBcolor *init_color, void (*ok_callback)( ), void *ok_callback_data )
+gui_colorsel_window( const char *title, RGBcolor *init_color, void (*ok_callback)( RGBcolor *, void * ), void *ok_callback_data )
 {
 	GtkWidget *colorsel_window_w;
 	GtkColorSelectionDialog *csd;
@@ -1207,7 +1211,7 @@ entry_window_cb( GtkWidget *unused, GtkWidget *entry_window_w )
 /* Creates a one-line text-entry window, initialized with the given text
  * string. OK button activates ok_callback */
 GtkWidget *
-gui_entry_window( const char *title, const char *init_text, void (*ok_callback)( ), void *ok_callback_data )
+gui_entry_window( const char *title, const char *init_text, void (*ok_callback)( const char *, void * ), void *ok_callback_data )
 {
 	GtkWidget *entry_window_w;
 	GtkWidget *frame_w;
@@ -1276,7 +1280,7 @@ filesel_window_cb( GtkWidget *filesel_w )
 /* Creates a file selection window, with an optional default filename.
  * OK button activates ok_callback */
 GtkWidget *
-gui_filesel_window( const char *title, const char *init_filename, void (*ok_callback)( ), void *ok_callback_data )
+gui_filesel_window( const char *title, const char *init_filename, void (*ok_callback)( const char *, void * ), void *ok_callback_data )
 {
 	GtkWidget *filesel_window_w;
 

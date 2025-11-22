@@ -25,7 +25,10 @@
 #include "ogl.h"
 
 #include <gtk/gtk.h>
-#include <gtkgl/gtkglarea.h>
+#include <gtk/gtkgl.h>
+#include <gdk/gdkgl.h>
+#include <gdk/gdkglinit.h>
+#include <gdk/gdkglquery.h>
 #include <GL/gl.h>
 #include <GL/glu.h> /* gluPickMatrix( ) */
 
@@ -37,6 +40,36 @@
 
 /* Main viewport OpenGL area widget */
 static GtkWidget *viewport_gl_area_w = NULL;
+static GdkGLConfig *viewport_gl_config = NULL;
+
+static void
+ogl_make_current( GtkWidget *gl_area_w )
+{
+	GdkGLDrawable *drawable;
+	GdkGLContext *context;
+
+	drawable = gtk_widget_get_gl_drawable( gl_area_w );
+	context = gtk_widget_get_gl_context( gl_area_w );
+
+	if (drawable != NULL && context != NULL)
+		gdk_gl_drawable_make_current( drawable, context );
+}
+
+
+static void
+ogl_swap_buffers( GtkWidget *gl_area_w )
+{
+	GdkGLDrawable *drawable;
+
+	drawable = gtk_widget_get_gl_drawable( gl_area_w );
+	if (drawable == NULL)
+		return;
+
+	if (gdk_gl_drawable_is_double_buffered( drawable ))
+		gdk_gl_drawable_swap_buffers( drawable );
+	else
+		glFlush( );
+}
 
 
 /* Initializes OpenGL state */
@@ -185,6 +218,8 @@ ogl_draw( void )
 	static FsvMode prev_mode = FSV_NONE;
 	int err;
 
+	ogl_make_current( viewport_gl_area_w );
+
 	geometry_highlight_node( NULL, TRUE );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -205,7 +240,7 @@ ogl_draw( void )
 			return;
 	}
 
-	gtk_gl_area_swapbuffers( GTK_GL_AREA(viewport_gl_area_w) );
+	ogl_swap_buffers( viewport_gl_area_w );
 }
 
 
@@ -219,6 +254,8 @@ ogl_select( int x, int y, const GLuint **selectbuf_ptr )
 	static GLuint selectbuf[1024];
 	GLint viewport[4];
 	int ogl_y, hit_count;
+
+	ogl_make_current( viewport_gl_area_w );
 
 	glSelectBuffer( 1024, selectbuf );
 	glRenderMode( GL_SELECT );
@@ -251,7 +288,7 @@ ogl_select( int x, int y, const GLuint **selectbuf_ptr )
 static void
 realize_cb( GtkWidget *gl_area_w )
 {
-	gtk_gl_area_make_current( GTK_GL_AREA(gl_area_w) );
+	ogl_make_current( gl_area_w );
 	ogl_init( );
 }
 
@@ -260,18 +297,19 @@ realize_cb( GtkWidget *gl_area_w )
 GtkWidget *
 ogl_widget_new( void )
 {
-	int gl_area_attributes[] = {
-		GDK_GL_RGBA,
-		GDK_GL_RED_SIZE, 1,
-		GDK_GL_GREEN_SIZE, 1,
-		GDK_GL_BLUE_SIZE, 1,
-		GDK_GL_DEPTH_SIZE, 1,
-		GDK_GL_DOUBLEBUFFER,
-		GDK_GL_NONE
-	};
+	if (!gdk_gl_query_extension( ))
+		return NULL;
+
+	viewport_gl_config = gdk_gl_config_new_by_mode( GDK_GL_MODE_RGBA | GDK_GL_MODE_DOUBLE | GDK_GL_MODE_DEPTH );
+	if (viewport_gl_config == NULL)
+		viewport_gl_config = gdk_gl_config_new_by_mode( GDK_GL_MODE_RGBA | GDK_GL_MODE_DEPTH );
+
+	if (viewport_gl_config == NULL)
+		return NULL;
 
 	/* Create the widget */
-	viewport_gl_area_w = gtk_gl_area_new( gl_area_attributes );
+	viewport_gl_area_w = gtk_drawing_area_new( );
+	gtk_widget_set_gl_capability( viewport_gl_area_w, viewport_gl_config, NULL, TRUE, GDK_GL_RGBA_TYPE );
 
 	/* Initialize widget's GL state when realized */
 	gtk_signal_connect( GTK_OBJECT(viewport_gl_area_w), "realize", GTK_SIGNAL_FUNC(realize_cb), NULL );

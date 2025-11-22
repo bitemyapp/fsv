@@ -55,20 +55,30 @@ GtkAdjustment *gui_int_adjustment( int value, int lower, int upper );
 GtkWidget *gui_hbox_add( GtkWidget *parent_w, int spacing );
 GtkWidget *gui_vbox_add( GtkWidget *parent_w, int spacing );
 void gui_box_set_packing( GtkWidget *box_w, boolean expand, boolean fill, boolean start );
-GtkWidget *gui_button_add( GtkWidget *parent_w, const char *label, void (*callback)( ), void *callback_data );
-GtkWidget *gui_button_with_pixmap_xpm_add( GtkWidget *parent_w, char **xpm_data, const char *label, void (*callback)( ), void *callback_data );
-GtkWidget *gui_toggle_button_add( GtkWidget *parent_w, const char *label, boolean active, void (*callback)( ), void *callback_data );
+GtkWidget *gui_button_add_cb( GtkWidget *parent_w, const char *label, GCallback callback, void *callback_data );
+#define gui_button_add(parent_w, label, callback, callback_data) \
+	gui_button_add_cb(parent_w, label, G_CALLBACK(callback), callback_data)
+GtkWidget *gui_button_with_pixmap_xpm_add_cb( GtkWidget *parent_w, char **xpm_data, const char *label, GCallback callback, void *callback_data );
+#define gui_button_with_pixmap_xpm_add(parent_w, xpm_data, label, callback, callback_data) \
+	gui_button_with_pixmap_xpm_add_cb(parent_w, xpm_data, label, G_CALLBACK(callback), callback_data)
+GtkWidget *gui_toggle_button_add_cb( GtkWidget *parent_w, const char *label, boolean active, GCallback callback, void *callback_data );
+#define gui_toggle_button_add(parent_w, label, active, callback, callback_data) \
+	gui_toggle_button_add_cb(parent_w, label, active, G_CALLBACK(callback), callback_data)
 GtkWidget *gui_clist_add( GtkWidget *parent_w, int num_cols, char *col_titles[] );
 void gui_clist_moveto_row( GtkWidget *clist_w, int row, double moveto_time );
-GtkWidget *gui_colorpicker_add( GtkWidget *parent_w, RGBcolor *init_color, const char *title, void (*callback)( ), void *callback_data );
+GtkWidget *gui_colorpicker_add( GtkWidget *parent_w, RGBcolor *init_color, const char *title, void (*callback)( RGBcolor *, void * ), void *callback_data );
 void gui_colorpicker_set_color( GtkWidget *colorpicker_w, RGBcolor *color );
 GtkWidget *gui_ctree_add( GtkWidget *parent_w );
 GtkCTreeNode *gui_ctree_node_add( GtkWidget *ctree_w, GtkCTreeNode *parent, Icon icon_pair[2], const char *text, boolean expanded, void *data );
 void gui_cursor( GtkWidget *widget, int glyph );
-GtkWidget *gui_dateedit_add( GtkWidget *parent_w, time_t the_time, void (*callback)( ), void *callback_data );
+GtkWidget *gui_dateedit_add_cb( GtkWidget *parent_w, time_t the_time, GCallback callback, void *callback_data );
+#define gui_dateedit_add(parent_w, the_time, callback, callback_data) \
+	gui_dateedit_add_cb(parent_w, the_time, G_CALLBACK(callback), callback_data)
 time_t gui_dateedit_get_time( GtkWidget *dateedit_w );
 void gui_dateedit_set_time( GtkWidget *dateedit_w, time_t the_time );
-GtkWidget *gui_entry_add( GtkWidget *parent_w, const char *init_text, void (*callback)( ), void *callback_data );
+GtkWidget *gui_entry_add_cb( GtkWidget *parent_w, const char *init_text, GCallback callback, void *callback_data );
+#define gui_entry_add(parent_w, init_text, callback, callback_data) \
+	gui_entry_add_cb(parent_w, init_text, G_CALLBACK(callback), callback_data)
 void gui_entry_set_text( GtkWidget *entry_w, const char *entry_text );
 char *gui_entry_get_text( GtkWidget *entry_w );
 void gui_entry_highlight( GtkWidget *entry_w );
@@ -77,11 +87,17 @@ GtkWidget *gui_gl_area_add( GtkWidget *parent_w );
 void gui_keybind( GtkWidget *widget, char *keystroke );
 GtkWidget *gui_label_add( GtkWidget *parent_w, const char *label_text );
 GtkWidget *gui_menu_add( GtkWidget *parent_menu_w, const char *label );
-GtkWidget *gui_menu_item_add( GtkWidget *menu_w, const char *label, void (*callback)( ), void *callback_data );
+GtkWidget *gui_menu_item_add_cb( GtkWidget *menu_w, const char *label, GCallback callback, void *callback_data );
+#define gui_menu_item_add(menu_w, label, callback, callback_data) \
+	gui_menu_item_add_cb(menu_w, label, G_CALLBACK(callback), callback_data)
 void gui_radio_menu_begin( int init_selected );
-GtkWidget *gui_radio_menu_item_add( GtkWidget *menu_w, const char *label, void (*callback)( ), void *callback_data );
+GtkWidget *gui_radio_menu_item_add_cb( GtkWidget *menu_w, const char *label, GCallback callback, void *callback_data );
+#define gui_radio_menu_item_add(menu_w, label, callback, callback_data) \
+	gui_radio_menu_item_add_cb(menu_w, label, G_CALLBACK(callback), callback_data)
 GtkWidget *gui_option_menu_add( GtkWidget *parent_w, int init_selected );
-GtkWidget *gui_option_menu_item( const char *label, void (*callback)( ), void *callback_data );
+GtkWidget *gui_option_menu_item_cb( const char *label, GCallback callback, void *callback_data );
+#define gui_option_menu_item(label, callback, callback_data) \
+	gui_option_menu_item_cb(label, G_CALLBACK(callback), callback_data)
 GtkWidget *gui_notebook_add( GtkWidget *parent_w );
 void gui_notebook_page_add( GtkWidget *notebook_w, const char *tab_label, GtkWidget *content_w );
 GtkWidget *gui_hpaned_add( GtkWidget *parent_w, int divider_x_pos );
@@ -98,10 +114,10 @@ GtkWidget *gui_table_add( GtkWidget *parent_w, int num_rows, int num_cols, boole
 void gui_table_attach( GtkWidget *table_w, GtkWidget *widget, int left, int right, int top, int bottom );
 GtkWidget *gui_text_area_add( GtkWidget *parent_w, const char *init_text );
 void gui_widget_packing( GtkWidget *widget, boolean expand, boolean fill, boolean start );
-GtkWidget *gui_colorsel_window( const char *title, RGBcolor *init_color, void (*ok_callback)( ), void *ok_callback_data );
-GtkWidget *gui_dialog_window( const char *title, void (*close_callback )( ) );
-GtkWidget *gui_entry_window( const char *title, const char *init_text, void (*ok_callback)( ), void *ok_callback_data );
-GtkWidget *gui_filesel_window( const char *title, const char *init_filename, void (*ok_callback)( ), void *ok_callback_data );
+GtkWidget *gui_colorsel_window( const char *title, RGBcolor *init_color, void (*ok_callback)( RGBcolor *, void * ), void *ok_callback_data );
+GtkWidget *gui_dialog_window( const char *title, void (*close_callback )( void ) );
+GtkWidget *gui_entry_window( const char *title, const char *init_text, void (*ok_callback)( const char *, void * ), void *ok_callback_data );
+GtkWidget *gui_filesel_window( const char *title, const char *init_filename, void (*ok_callback)( const char *, void * ), void *ok_callback_data );
 void gui_window_icon_xpm( GtkWidget *window_w, char **xpm_data );
 void gui_window_modalize( GtkWidget *window_w, GtkWidget *parent_window_w );
 #endif /* __GTK_H__ */

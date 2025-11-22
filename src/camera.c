@@ -988,7 +988,7 @@ pan_step_cb( Morph *unused )
 
 /* "Post-callback" for pan_end_cb( ), called exactly one frame later */
 static void
-post_pan_end( GNode *node )
+post_pan_end( void *node )
 {
 	/* Inform geometry module of camera pan completion */
 	geometry_camera_pan_finished( );
@@ -1105,8 +1105,9 @@ camera_look_at( GNode *node )
 
 /* Helper function for treev_look_at_lpan( ) */
 static void
-lpan_stage2( void **data )
+lpan_stage2( void *data_void )
 {
+	void **data = (void **)data_void;
 	GNode *node;
 	double pan_time;
 

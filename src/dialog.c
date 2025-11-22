@@ -81,7 +81,7 @@ transient_end_cb( Morph *morph )
 
 /* Callback for the OK button */
 static void
-change_root_cb( const char *dir )
+change_root_cb( const char *dir, void *unused )
 {
 	if (globals.fsv_mode != FSV_SPLASH)
 		fsv_load( dir );
@@ -198,8 +198,10 @@ static void csdialog_wpattern_clist_row_move_cb( GtkWidget *clist_w, int source_
 
 /* Callback for the node type color pickers */
 static void
-csdialog_node_type_color_picker_cb( RGBcolor *picked_color, RGBcolor *node_type_color )
+csdialog_node_type_color_picker_cb( RGBcolor *picked_color, void *node_type_color_void )
 {
+	RGBcolor *node_type_color = (RGBcolor *)node_type_color_void;
+
 	/* node_type_color points to the appropriate member of
 	 * csdialog.color_config.by_nodetype.colors[] */
 	node_type_color->r = picked_color->r;
@@ -238,12 +240,12 @@ csdialog_time_edit_cb( GtkWidget *dateedit_w )
 	}
 
 	/* Reset old and new times */
-	gtk_signal_handler_block_by_func( GTK_OBJECT(csdialog.time.old_dateedit_w), csdialog_time_edit_cb, NULL );
-	gtk_signal_handler_block_by_func( GTK_OBJECT(csdialog.time.new_dateedit_w), csdialog_time_edit_cb, NULL );
+	gtk_signal_handler_block_by_func( GTK_OBJECT(csdialog.time.old_dateedit_w), GTK_SIGNAL_FUNC(csdialog_time_edit_cb), NULL );
+	gtk_signal_handler_block_by_func( GTK_OBJECT(csdialog.time.new_dateedit_w), GTK_SIGNAL_FUNC(csdialog_time_edit_cb), NULL );
 	gui_dateedit_set_time( csdialog.time.old_dateedit_w, old_time );
 	gui_dateedit_set_time( csdialog.time.new_dateedit_w, new_time );
-	gtk_signal_handler_unblock_by_func( GTK_OBJECT(csdialog.time.old_dateedit_w), csdialog_time_edit_cb, NULL );
-	gtk_signal_handler_unblock_by_func( GTK_OBJECT(csdialog.time.new_dateedit_w), csdialog_time_edit_cb, NULL );
+	gtk_signal_handler_unblock_by_func( GTK_OBJECT(csdialog.time.old_dateedit_w), GTK_SIGNAL_FUNC(csdialog_time_edit_cb), NULL );
+	gtk_signal_handler_unblock_by_func( GTK_OBJECT(csdialog.time.new_dateedit_w), GTK_SIGNAL_FUNC(csdialog_time_edit_cb), NULL );
 
 	csdialog.color_config.by_timestamp.old_time = old_time;
 	csdialog.color_config.by_timestamp.new_time = new_time;
@@ -345,8 +347,10 @@ csdialog_time_spectrum_option_menu_cb( GtkWidget *omenu_item_w )
 
 /* Callback for the spectrum's color picker buttons */
 static void
-csdialog_time_color_picker_cb( RGBcolor *picked_color, RGBcolor *end_color )
+csdialog_time_color_picker_cb( RGBcolor *picked_color, void *end_color_void )
 {
+	RGBcolor *end_color = (RGBcolor *)end_color_void;
+
 	/* end_color points to either old_color or new_color in
 	 * csdialog.color_config.by_timestamp */
 	end_color->r = picked_color->r;
@@ -521,8 +525,10 @@ csdialog_wpattern_clist_populate( void )
 /* Callback for the color selection dialog popped up by clicking on a
  * color bar in the wildcard pattern list */
 static void
-csdialog_wpattern_color_selection_cb( RGBcolor *selected_color, RGBcolor *wpattern_color )
+csdialog_wpattern_color_selection_cb( RGBcolor *selected_color, void *wpattern_color_void )
 {
+	RGBcolor *wpattern_color = (RGBcolor *)wpattern_color_void;
+
 	/* wpattern_color points to the appropriate color record
 	 * somewhere inside csdialog.color_config.by_wpattern */
 	wpattern_color->r = selected_color->r;
@@ -688,8 +694,11 @@ csdialog_wpattern_clist_row_move_cb( GtkWidget *clist_w, int source_row, int des
 		}
 		/* Move color group to new position */
 #define WPGROUP_LIST csdialog.color_config.by_wpattern.wpgroup_list
+		{
+		GList *dest_link = g_list_find( WPGROUP_LIST, dest_row_data->wpgroup );
 		G_LIST_REMOVE(WPGROUP_LIST, source_row_data->wpgroup);
-		G_LIST_INSERT_BEFORE(WPGROUP_LIST, dest_row_data->wpgroup, source_row_data->wpgroup);
+		G_LIST_INSERT_BEFORE(WPGROUP_LIST, dest_link, source_row_data->wpgroup);
+		}
 #undef WPGROUP_LIST
 		/* Update list */
 		csdialog_wpattern_clist_populate( );
@@ -718,7 +727,10 @@ csdialog_wpattern_clist_row_move_cb( GtkWidget *clist_w, int source_row, int des
 #define S_SIBLINGS source_row_data->wpgroup->wp_list
 #define D_SIBLINGS dest_row_data->wpgroup->wp_list
 			G_LIST_REMOVE(S_SIBLINGS, source_row_data->wpattern);
-			G_LIST_INSERT_BEFORE(D_SIBLINGS, dest_row_data->wpattern, source_row_data->wpattern);
+			{
+			GList *dest_link = g_list_find( D_SIBLINGS, dest_row_data->wpattern );
+			G_LIST_INSERT_BEFORE(D_SIBLINGS, dest_link, source_row_data->wpattern);
+			}
 #undef S_SIBLINGS
 #undef D_SIBLINGS
 			if (source_row_data->wpgroup != dest_row_data->wpgroup) {
@@ -743,8 +755,9 @@ csdialog_wpattern_clist_row_move_cb( GtkWidget *clist_w, int source_row, int des
 /* Callback for the color selection dialog popped up by the "New color"
  * button */
 static void
-csdialog_wpattern_new_color_selection_cb( RGBcolor *selected_color, struct WPListRowData *row_data )
+csdialog_wpattern_new_color_selection_cb( RGBcolor *selected_color, void *row_data_void )
 {
+	struct WPListRowData *row_data = (struct WPListRowData *)row_data_void;
 	struct WPatternGroup *wpgroup;
 	boolean place_before_existing_group = FALSE;
 
@@ -763,7 +776,7 @@ csdialog_wpattern_new_color_selection_cb( RGBcolor *selected_color, struct WPLis
 
 #define WPGROUP_LIST csdialog.color_config.by_wpattern.wpgroup_list
 	if (place_before_existing_group)
-		G_LIST_INSERT_BEFORE(WPGROUP_LIST, row_data->wpgroup, wpgroup);
+		G_LIST_INSERT_BEFORE(WPGROUP_LIST, g_list_find( WPGROUP_LIST, row_data->wpgroup ), wpgroup);
 	else {
 		G_LIST_APPEND(WPGROUP_LIST, wpgroup);
 		/* Scroll clist to bottom (to make new group visible) */
@@ -778,8 +791,9 @@ csdialog_wpattern_new_color_selection_cb( RGBcolor *selected_color, struct WPLis
 
 /* Callback for the wildcard pattern edit subdialog */
 static void
-csdialog_wpattern_edit_cb( const char *input_text, struct WPListRowData *row_data )
+csdialog_wpattern_edit_cb( const char *input_text, void *row_data_void )
 {
+	struct WPListRowData *row_data = (struct WPListRowData *)row_data_void;
 	GList *l; /* for debugging */
 	char *wpattern;
 

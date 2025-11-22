@@ -1,3 +1,3 @@
 EXTRA_DIST = NOTES TODO fsv.spec fsv.spec.in fsv.wmconfig
-SUBDIRS = debug doc intl lib po src
+SUBDIRS = debug doc intl lib src
 AUTOMAKE_OPTIONS = foreign

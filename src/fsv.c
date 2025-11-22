@@ -27,7 +27,9 @@
 #include "fsv.h"
 
 #include <gtk/gtk.h>
-#include <gtkgl/gdkgl.h>
+#include <gdk/gdkgl.h>
+#include <gdk/gdkglinit.h>
+#include <gdk/gdkglquery.h>
 #include "getopt.h"
 
 #include "about.h"
@@ -83,8 +85,10 @@ static const char usage_summary[] = __("\n"
 
 /* Helper function for fsv_set_mode( ) */
 static void
-initial_camera_pan( char *mesg )
+initial_camera_pan( void *mesg_void )
 {
+	char *mesg = (char *)mesg_void;
+
 	/* To prevent root_dnode from appearing twice in a row at
 	 * the bottom of the node history stack */
 	G_LIST_PREPEND(globals.history, NULL);
@@ -300,7 +304,7 @@ main( int argc, char **argv )
 	gtk_init( &argc, &argv );
 
 	/* Check for OpenGL support */
-	if (!gdk_gl_query( ))
+	if (!gdk_gl_query_extension( ))
 		quit( _("fsv requires OpenGL support.") );
 
 	window_init( initial_fsv_mode );

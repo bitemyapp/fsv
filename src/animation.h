@@ -63,7 +63,7 @@ struct _Morph {
 };
 
 
-void schedule_event( void (*event_cb)(  ), void *data, int nframes );
+void schedule_event( void (*event_cb)( void * ), void *data, int nframes );
 void morph_full( double *var, MorphType type, double target_value, double duration, void (*step_cb)( Morph * ), void (*end_cb)( Morph * ), void *data );
 void morph( double *var, MorphType type, double target_value, double duration );
 void morph_finish( double *var );

@@ -58,7 +58,7 @@ static boolean animation_active = FALSE;
 /* Schedules an event (callback) to occur after the given number of
  * frames have elapsed */
 void
-schedule_event( void (*event_cb)( ), void *data, int nframes )
+schedule_event( void (*event_cb)( void * ), void *data, int nframes )
 {
 	ScheduledEvent *new_schevent;
 

@@ -138,7 +138,11 @@ AC_SUBST(GL_LIBS)
 #### end of OpenGL/Mesa3D configuration ####
 
 #### GtkGLArea library ####
-PKG_CHECK_MODULES([GTKGL], [gtkgl-2.0])
+# Prefer the legacy gtkgl-2.0 name, but fall back to gtkglext-1.0 (Arch/AUR)
+PKG_CHECK_MODULES([GTKGL], [gtkgl-2.0], ,
+	[PKG_CHECK_MODULES([GTKGL], [gtkglext-1.0],
+		[AC_MSG_NOTICE([using gtkglext-1.0 pkg-config module])],
+		[AC_MSG_ERROR([GtkGLArea not found (tried gtkgl-2.0 and gtkglext-1.0)])])])
 
 # Check for 'file' command
 AC_PATH_PROG(FILE_CMD, file)
@@ -154,5 +158,4 @@ AC_OUTPUT(fsv.spec
 	doc/Makefile
 	intl/Makefile
 	lib/Makefile
-	po/Makefile.in
 	src/Makefile)
